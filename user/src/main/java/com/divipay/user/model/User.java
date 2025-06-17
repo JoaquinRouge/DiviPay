@@ -36,6 +36,9 @@ public class User {
 	private boolean accountNonLocked;
 	
 	@Column(nullable = false)
+	private boolean credentialsNonExpired;
+	
+	@Column(nullable = false)
 	private boolean enabled;
 	
 	public User() {
@@ -112,6 +115,14 @@ public class User {
 
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
+	}
+
+	public boolean isCredentialsNonExpired() {
+		return credentialsNonExpired;
+	}
+
+	public void setCredentialsNonExpired(boolean credentialsNonExpired) {
+		this.credentialsNonExpired = credentialsNonExpired;
 	}
 	
 }

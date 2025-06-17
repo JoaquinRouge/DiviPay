@@ -40,6 +40,7 @@ public class UserService implements IUserService {
 		
 		user.setAccountNonExpired(true);
 		user.setAccountNonLocked(true);
+		user.setCredentialsNonExpired(true);
 		user.setCreatedAt(LocalDate.now());
 		user.setEnabled(true);
 		user.setPassword(encode(user.getPassword()));

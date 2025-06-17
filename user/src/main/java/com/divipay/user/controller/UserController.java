@@ -25,7 +25,7 @@ public class UserController {
 	}
 	
 	@GetMapping("/{email}")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("permitAll()")
 	public ResponseEntity<?> findByEmail(@PathVariable String email){
 		try {
 			User user = userService.findByEmail(email);
