@@ -16,6 +16,8 @@ import com.divipay.auth.dto.AuthResponseDto;
 import com.divipay.auth.dto.UserModel;
 import com.divipay.auth.utils.JwtUtils;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+
 @Service
 public class UserDetailsServiceImp implements UserDetailsService{
 
@@ -31,6 +33,7 @@ public class UserDetailsServiceImp implements UserDetailsService{
 	}
 
 	@Override
+	@CircuitBreaker(name = "USER-SERVICE",fallbackMethod = "userFallbackMethod")
 	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 		
 		UserModel user = userClient.getUserByEmail(email);
@@ -40,6 +43,10 @@ public class UserDetailsServiceImp implements UserDetailsService{
 		}
 		
 		return user;
+	}
+	
+	public UserDetails userFallbackMethod(String email,Throwable t) {
+		throw new UsernameNotFoundException("User service unavailable. Try again later.");
 	}
 	
 	public AuthResponseDto login(AuthLoginDto data) {
