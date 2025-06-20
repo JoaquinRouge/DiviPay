@@ -16,13 +16,14 @@ public class UserModel implements UserDetails{
 	private boolean accountNonLocked;
 	private boolean credentialsNonExpired;
 	private boolean enabled;
+	private boolean hasPaid;
 	
 	public UserModel() {
 		
 	}
 	
 	public UserModel(Long id, String email, String password, boolean accountNonExpired, boolean accountNonLocked,
-			boolean credentialsNonExpired, boolean enabled) {
+			boolean credentialsNonExpired, boolean enabled,boolean hasPaid) {
 		super();
 		this.id = id;
 		this.email = email;
@@ -31,6 +32,7 @@ public class UserModel implements UserDetails{
 		this.accountNonLocked = accountNonLocked;
 		this.credentialsNonExpired = credentialsNonExpired;
 		this.enabled = enabled;
+		this.hasPaid = hasPaid;
 	}
 
 
@@ -103,6 +105,14 @@ public class UserModel implements UserDetails{
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public boolean isHasPaid() {
+		return hasPaid;
+	}
+
+	public void setHasPaid(boolean hasPaid) {
+		this.hasPaid = hasPaid;
 	}
 	
 }

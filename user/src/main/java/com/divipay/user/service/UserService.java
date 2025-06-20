@@ -44,6 +44,7 @@ public class UserService implements IUserService {
 		user.setCreatedAt(LocalDate.now());
 		user.setEnabled(true);
 		user.setPassword(encode(user.getPassword()));
+		user.setHasPaid(false);
 		
 		return userRepo.save(user);
 	}

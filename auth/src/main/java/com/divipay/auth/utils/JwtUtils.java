@@ -37,6 +37,7 @@ public class JwtUtils {
 					.withIssuer(userGenerator)
 					.withSubject(user.getUsername())
 					.withClaim("id", user.getId())
+					.withClaim("hasPaid", user.isHasPaid())
 					.withIssuedAt(new Date())
 					.withExpiresAt(new Date(System.currentTimeMillis() + 43200000))
 					.withJWTId(UUID.randomUUID().toString())

@@ -41,6 +41,8 @@ public class User {
 	@Column(nullable = false)
 	private boolean enabled;
 	
+	private boolean hasPaid;
+	
 	public User() {
 		
 	}
@@ -123,6 +125,14 @@ public class User {
 
 	public void setCredentialsNonExpired(boolean credentialsNonExpired) {
 		this.credentialsNonExpired = credentialsNonExpired;
+	}
+
+	public boolean isHasPaid() {
+		return hasPaid;
+	}
+
+	public void setHasPaid(boolean hasPaid) {
+		this.hasPaid = hasPaid;
 	}
 	
 }
