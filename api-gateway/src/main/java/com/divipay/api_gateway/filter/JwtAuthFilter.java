@@ -9,7 +9,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.util.Base64;
 
 import reactor.core.publisher.Mono;
 
@@ -17,6 +22,9 @@ import reactor.core.publisher.Mono;
 public class JwtAuthFilter implements GlobalFilter {
 
     private JwtUtils jwtUtils;
+    
+    @Value("${SECRET_SHA}")
+    private String secret;
     
     public JwtAuthFilter(JwtUtils jwtUtils) {
     	this.jwtUtils = jwtUtils;
@@ -44,11 +52,21 @@ public class JwtAuthFilter implements GlobalFilter {
         String email = decoded.getClaim("sub").asString();
         String hasPaid = decoded.getClaim("hasPaid").asString();
 
+        String dataToSign = userId + email + hasPaid;
+        String signature = null;
+        
+        try {
+			signature = generateHMAC(dataToSign, secret);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+        
         // Agregar headers personalizados
         ServerHttpRequest modifiedRequest = request.mutate()
             .header("X-User-Id", userId)
             .header("X-Email", email)
             .header("X-Has-Paid", hasPaid)
+            .header("X-Signature", signature)
             .build();
 
         return chain.filter(exchange.mutate().request(modifiedRequest).build());
@@ -58,5 +76,16 @@ public class JwtAuthFilter implements GlobalFilter {
         exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
         return exchange.getResponse().setComplete();
     }
+    
+    private String generateHMAC(String data, String secretKey) throws Exception {
+        Mac mac = Mac.getInstance("HmacSHA256");
+        SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(), "HmacSHA256");
+        mac.init(secretKeySpec);
+        byte[] hmacBytes = mac.doFinal(data.getBytes());
+        
+        	
+        return Base64.getEncoder().encodeToString(hmacBytes);
+    }
+    
 }
 
