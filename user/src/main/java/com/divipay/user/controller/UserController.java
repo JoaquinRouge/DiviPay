@@ -1,5 +1,6 @@
 package com.divipay.user.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.divipay.user.model.User;
 import com.divipay.user.service.IUserService;
+import com.divipay.user.utils.HmacVerifier;
 
 @RestController
 @RequestMapping("/api/user")
@@ -21,18 +23,28 @@ public class UserController {
 
 	private final IUserService userService;
 	
+	@Value("${SECRET_SHA}")
+	private String secretKey;
+	
 	public UserController(IUserService userService) {
 		this.userService = userService;
 	}
 	
 	@GetMapping("/prueba")
-	public String prueba(@RequestHeader(value = "X-Email",required = false) String email) {
-		if(email == null) {
-			return "denegado";
-		}else {
-			return "funciona bien";
+	public String prueba(
+		    @RequestHeader(value = "X-User-Id", required = true) String userId,
+		    @RequestHeader(value = "X-Email", required = true) String email,
+		    @RequestHeader(value = "X-Has-Paid", required = true) String hasPaid,
+		    @RequestHeader("X-Signature") String signature
+		) {
+		
+		    boolean valid = HmacVerifier.verify(userId, email, hasPaid, signature, secretKey);
+		    if (!valid) {
+		        return "firma inválida - acceso denegado";
+		    }
+
+		    return "acceso válido" + email + userId + hasPaid;
 		}
-	}
 	
 	@GetMapping("/email/{email}")
 	@PreAuthorize("permitAll()")

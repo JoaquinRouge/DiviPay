@@ -48,10 +48,12 @@ public class JwtAuthFilter implements GlobalFilter {
             return unauthorized(exchange);
         }
 
-        String userId = decoded.getClaim("id").asString();
-        String email = decoded.getClaim("sub").asString();
-        String hasPaid = decoded.getClaim("hasPaid").asString();
+        String userId = String.valueOf(decoded.getClaim("id").asInt());
+        String email = decoded.getSubject();
+        String hasPaid = String.valueOf(decoded.getClaim("hasPaid").asBoolean());
 
+        System.out.println("DATOS: " + userId + hasPaid + email);
+        
         String dataToSign = userId + email + hasPaid;
         String signature = null;
         
@@ -68,7 +70,7 @@ public class JwtAuthFilter implements GlobalFilter {
             .header("X-Has-Paid", hasPaid)
             .header("X-Signature", signature)
             .build();
-
+      
         return chain.filter(exchange.mutate().request(modifiedRequest).build());
     }
 
