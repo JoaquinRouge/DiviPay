@@ -9,7 +9,7 @@ import com.divipay.auth.dto.UserModel;
 @FeignClient(name = "USER-SERVICE")
 public interface UserClient {
 	
-	@GetMapping("/api/user/{email}")
+	@GetMapping("/api/user/email/{email}")
 	public UserModel getUserByEmail(@PathVariable String email);
 	
 }

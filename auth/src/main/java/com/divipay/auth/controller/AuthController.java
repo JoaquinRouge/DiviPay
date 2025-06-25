@@ -7,6 +7,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,8 +25,8 @@ public class AuthController {
 	}
 	
 	@PostMapping("/login")
-	@PreAuthorize("permitAll()")
 	public ResponseEntity<?> login(@RequestBody AuthLoginDto loginData){
+		
 		try {
 			return ResponseEntity.status(HttpStatus.OK).body(userDetails.login(loginData));
 		}catch(UsernameNotFoundException e) {
