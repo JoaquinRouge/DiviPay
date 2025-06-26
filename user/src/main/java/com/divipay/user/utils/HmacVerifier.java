@@ -5,9 +5,16 @@ import java.util.Base64;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@Component
 public class HmacVerifier {
 
-    public static boolean verify(String userId, String email, String hasPaid, String receivedSignature, String secretKey) {
+	@Value("${SECRET_SHA}")
+	private String secretKey;
+	
+    public boolean verify(Long userId, String email, boolean hasPaid, String receivedSignature) {
         try {
             String dataToSign = userId + email + hasPaid;
 

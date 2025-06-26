@@ -15,13 +15,21 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;
+import java.util.List;
 
 import reactor.core.publisher.Mono;
 
 @Component
 public class JwtAuthFilter implements GlobalFilter {
 
+	private static final List<String> PUBLIC_PATHS = List.of(
+			
+			"/api/user/create"
+			
+			);
+	
     private JwtUtils jwtUtils;
+    
     
     @Value("${SECRET_SHA}")
     private String secret;
@@ -33,8 +41,14 @@ public class JwtAuthFilter implements GlobalFilter {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
+        String path = request.getPath().toString();
+        
+        if (isPublicPath(path)) {
+            return chain.filter(exchange);
+        }
+        
         String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-
+        
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
         	 return chain.filter(exchange);
         }
@@ -87,6 +101,10 @@ public class JwtAuthFilter implements GlobalFilter {
         
         	
         return Base64.getEncoder().encodeToString(hmacBytes);
+    }
+    
+    private boolean isPublicPath(String path) {
+        return PUBLIC_PATHS.stream().anyMatch(path::startsWith);
     }
     
 }

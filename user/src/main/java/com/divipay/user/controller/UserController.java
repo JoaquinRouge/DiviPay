@@ -1,9 +1,7 @@
 package com.divipay.user.controller;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,23 +20,22 @@ import com.divipay.user.utils.HmacVerifier;
 public class UserController {
 
 	private final IUserService userService;
+	private final HmacVerifier hmacVerifier;
 	
-	@Value("${SECRET_SHA}")
-	private String secretKey;
-	
-	public UserController(IUserService userService) {
+	public UserController(IUserService userService,HmacVerifier hmacVerifier) {
 		this.userService = userService;
+		this.hmacVerifier = hmacVerifier;
 	}
 	
 	@GetMapping("/prueba")
 	public String prueba(
-		    @RequestHeader(value = "X-User-Id", required = true) String userId,
+		    @RequestHeader(value = "X-User-Id", required = true) Long userId,
 		    @RequestHeader(value = "X-Email", required = true) String email,
-		    @RequestHeader(value = "X-Has-Paid", required = true) String hasPaid,
+		    @RequestHeader(value = "X-Has-Paid", required = true) boolean hasPaid,
 		    @RequestHeader("X-Signature") String signature
 		) {
 		
-		    boolean valid = HmacVerifier.verify(userId, email, hasPaid, signature, secretKey);
+		    boolean valid = hmacVerifier.verify(userId, email, hasPaid, signature);
 		    if (!valid) {
 		        return "firma inválida - acceso denegado";
 		    }
@@ -47,7 +44,6 @@ public class UserController {
 		}
 	
 	@GetMapping("/email/{email}")
-	@PreAuthorize("permitAll()")
 	public ResponseEntity<?> findByEmail(@PathVariable String email){
 		try {
 			User user = userService.findByEmail(email);
@@ -56,9 +52,8 @@ public class UserController {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 		}
 	}
-	
-	@PostMapping()
-	@PreAuthorize("permitAll()")
+	 
+	@PostMapping("/create")
 	public ResponseEntity<?> createUser(@RequestBody User user){
 		try {
 			User created = userService.createUser(user);
@@ -69,8 +64,16 @@ public class UserController {
 	}
 	
 	@PutMapping("/disable/{id}")
-	@PreAuthorize("isAuthenticated()")
-	public ResponseEntity<?> disableUser(@PathVariable Long id){
+	public ResponseEntity<?> disableUser(@PathVariable Long id,
+		    @RequestHeader(value = "X-User-Id", required = true) Long userId,
+		    @RequestHeader(value = "X-Email", required = true) String email,
+		    @RequestHeader(value = "X-Has-Paid", required = true) boolean hasPaid,
+		    @RequestHeader("X-Signature") String signature){
+		
+		if(!hmacVerifier.verify(userId, email, hasPaid, signature) || userId != id) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+		}
+		
 		try {
 			userService.disableUser(id);
 			return ResponseEntity.status(HttpStatus.OK).build();
@@ -80,8 +83,17 @@ public class UserController {
 	}
 	
 	@PutMapping("/update")
-	@PreAuthorize("isAuthenticated")
-	public ResponseEntity<?> updateUser(@RequestBody User user){
+	public ResponseEntity<?> updateUser(@RequestBody User user,
+		    @RequestHeader(value = "X-User-Id", required = true) Long userId,
+		    @RequestHeader(value = "X-Email", required = true) String email,
+		    @RequestHeader(value = "X-Has-Paid", required = true) boolean hasPaid,
+		    @RequestHeader("X-Signature") String signature){
+		
+		if(!hmacVerifier.verify(userId, email, hasPaid, signature) ||
+				userId != user.getId()) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+		}
+		
 		try {
 			User updated = userService.updateUser(user);
 			return ResponseEntity.status(HttpStatus.CREATED).body(updated);
