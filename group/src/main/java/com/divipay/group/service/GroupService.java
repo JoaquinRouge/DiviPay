@@ -31,7 +31,11 @@ public class GroupService implements IGroupService {
 	}
 
 	@Override
-	public Group createGroup(Group group, boolean hasPaid) {
+	public Group createGroup(Group group, boolean hasPaid,Long requestUserId) {
+		
+		if(group.getOwnerId() != requestUserId) {
+			throw new IllegalArgumentException("Unauthorized");
+		}
 		
 		if(!hasPaid && findByOwnerId(group.getOwnerId()).size() == 2) {
 			throw new IllegalArgumentException("Only 2 groups per member allowed."
@@ -45,8 +49,12 @@ public class GroupService implements IGroupService {
 	}
 
 	@Override
-	public void deleteGroup(Long id) {
+	public void deleteGroup(Long id,Long requestUserId) {
 
+		if(id != requestUserId) {
+			throw new IllegalArgumentException("Unauthorized");
+		}
+		
 		if(!groupRepo.existsById(id)) {
 			throw new IllegalArgumentException("Group not found");
 		}
@@ -56,9 +64,14 @@ public class GroupService implements IGroupService {
 	}
 
 	@Override
-	public Group updateGroup(UpdateGroupDto group) {
+	public Group updateGroup(UpdateGroupDto group,Long requestUserId) {
+		
+		if(group.id() != requestUserId) {
+			throw new IllegalArgumentException("Unauthorized");
+		}
 		
 		Group groupFromDb = findById(group.id());
+		
 		
 		groupFromDb.setName(group.name());
 		groupFromDb.setDescription(group.description());
