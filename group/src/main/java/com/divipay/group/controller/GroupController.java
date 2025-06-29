@@ -33,6 +33,44 @@ public class GroupController {
 		this.HmacVerifier = HmacVerifier;
 	}
 	
+	@GetMapping("/prueba")
+	public String prueba(
+		    @RequestHeader(value = "X-User-Id", required = true) Long userId,
+		    @RequestHeader(value = "X-Email", required = true) String email,
+		    @RequestHeader(value = "X-Has-Paid", required = true) boolean hasPaid,
+		    @RequestHeader(value = "X-Signature", required = true) String signature) {
+		
+		if(!this.HmacVerifier.verify(userId, email, hasPaid, signature)) {
+			return "no";
+		}
+		
+		if(userId != null && email != null && hasPaid) {
+			return "si y esta todo";
+		}
+		
+		return userId + email + hasPaid;
+		
+	}
+	
+	@GetMapping("/{id}/members")
+	public ResponseEntity<?> getMembersList(@PathVariable Long id,
+		    @RequestHeader(value = "X-User-Id", required = true) Long userId,
+		    @RequestHeader(value = "X-Email", required = true) String email,
+		    @RequestHeader(value = "X-Has-Paid", required = true) boolean hasPaid,
+		    @RequestHeader(value = "X-Signature", required = true) String signature){
+		
+		if(!this.HmacVerifier.verify(userId, email, hasPaid, signature)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+		}
+		
+		try {
+			return ResponseEntity.status(HttpStatus.OK).body(groupService.getMembersList(id));
+		}catch(IllegalArgumentException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		}
+		
+	}
+	
 	@GetMapping("/owner/{ownerId}")
 	public ResponseEntity<?> findByOwnerId(@PathVariable Long ownerId,
 		    @RequestHeader(value = "X-User-Id", required = true) Long userId,

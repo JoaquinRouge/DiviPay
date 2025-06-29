@@ -31,6 +31,18 @@ public class GroupService implements IGroupService {
 	}
 
 	@Override
+	public List<Long> getMembersList(Long id){
+		Group group = findById(id);
+		
+		List<Long> members = group.getMembers();
+		
+		members.add(group.getOwnerId());
+		
+		return members;
+		
+	}
+	
+	@Override
 	public Group createGroup(Group group, boolean hasPaid,Long requestUserId) {
 		
 		if(group.getOwnerId() != requestUserId) {
