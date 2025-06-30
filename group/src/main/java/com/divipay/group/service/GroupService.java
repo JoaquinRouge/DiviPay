@@ -29,7 +29,7 @@ public class GroupService implements IGroupService {
 	public List<Group> findByOwnerId(Long id) {
 		return groupRepo.findByOwnerId(id).orElse(Collections.emptyList());
 	}
-
+	
 	@Override
 	public List<Long> getMembersList(Long id){
 		Group group = findById(id);
@@ -40,6 +40,11 @@ public class GroupService implements IGroupService {
 		
 		return members;
 		
+	}
+	
+	@Override
+	public Long getOwner(Long id) {
+		return findById(id).getOwnerId();
 	}
 	
 	@Override

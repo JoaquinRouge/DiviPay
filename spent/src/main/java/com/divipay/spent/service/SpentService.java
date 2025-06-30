@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.divipay.spent.client.GroupClient;
+import com.divipay.spent.dto.UpdateSpentDto;
 import com.divipay.spent.model.Spent;
 import com.divipay.spent.repository.ISpentRepository;
 
@@ -56,23 +57,40 @@ public class SpentService implements ISpentService {
 	}
 
 	@Override
-	public void deleteSpent(Long id) {
+	public void deleteSpent(Long id,Long requestUserId) {
 
 		//Tengo que chequear que el usuario que hace la peticion para eliminar un gasto
-		//esta en el grupo que se encuentra ese gasto
+		//es el dueño del grupo en el que esta el gasto
 		
 		if(!spentRepo.existsById(id)) {
 			throw new IllegalArgumentException("Spent not found");
 		}
 		
+		Spent spent = findById(id);
 		
+		Long owner = groupClient.getOwner(spent.getGroupId()).id();
+		
+		if(requestUserId != owner) {
+			throw new IllegalArgumentException("Unauthorized");
+		}
+		
+		spentRepo.deleteById(id);
 		
 	}
 
 	@Override
-	public Spent updateSpent(Spent spent) {
-		// TODO Auto-generated method stub
-		return null;
+	public Spent updateSpent(UpdateSpentDto spent,Long requestUserId) {
+
+		Spent spentFromDb = findById(spent.id());
+		
+		if(requestUserId != spentFromDb.getUserId()) {
+			throw new IllegalArgumentException("Unauthorized");
+		}
+		
+		spentFromDb.setAmount(spent.amount());
+		spentFromDb.setDescription(spent.description());
+		
+		return spentRepo.save(spentFromDb);
 	}
 
 }
