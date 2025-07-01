@@ -39,32 +39,6 @@ public class GroupController {
     }
 
     @Operation(
-        summary = "Test group access",
-        description = "Verifies HMAC signature and confirms valid access"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Access verified"),
-        @ApiResponse(responseCode = "401", description = "Invalid signature")
-    })
-    @GetMapping("/prueba")
-    public String prueba(
-        @Parameter(description = "User ID") @RequestHeader("X-User-Id") Long userId,
-        @Parameter(description = "User email") @RequestHeader("X-Email") String email,
-        @Parameter(description = "Has paid flag") @RequestHeader("X-Has-Paid") boolean hasPaid,
-        @Parameter(description = "HMAC signature") @RequestHeader("X-Signature") String signature
-    ) {
-        if (!this.hmacVerifier.verify(userId, email, hasPaid, signature)) {
-            return "no";
-        }
-
-        if (userId != null && email != null && hasPaid) {
-            return "si y esta todo";
-        }
-
-        return userId + email + hasPaid;
-    }
-
-    @Operation(
         summary = "Get group owner",
         description = "Returns the email of the user who owns the specified group"
     )
