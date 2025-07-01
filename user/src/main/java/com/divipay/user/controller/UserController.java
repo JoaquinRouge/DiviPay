@@ -15,91 +15,142 @@ import com.divipay.user.model.User;
 import com.divipay.user.service.IUserService;
 import com.divipay.user.utils.HmacVerifier;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
 
-	private final IUserService userService;
-	private final HmacVerifier hmacVerifier;
-	
-	public UserController(IUserService userService,HmacVerifier hmacVerifier) {
-		this.userService = userService;
-		this.hmacVerifier = hmacVerifier;
-	}
-	
-	@GetMapping("/prueba")
-	public String prueba(
-		    @RequestHeader(value = "X-User-Id", required = true) Long userId,
-		    @RequestHeader(value = "X-Email", required = true) String email,
-		    @RequestHeader(value = "X-Has-Paid", required = true) boolean hasPaid,
-		    @RequestHeader("X-Signature") String signature
-		) {
-		
-		    boolean valid = hmacVerifier.verify(userId, email, hasPaid, signature);
-		    if (!valid) {
-		        return "firma inválida - acceso denegado";
-		    }
+    private final IUserService userService;
+    private final HmacVerifier hmacVerifier;
 
-		    return "acceso válido" + email + userId + hasPaid;
-		}
-	
-	@GetMapping("/email/{email}")
-	public ResponseEntity<?> findByEmail(@PathVariable String email){
-		try {
-			User user = userService.findByEmail(email);
-			return ResponseEntity.status(HttpStatus.OK).body(user);
-		}catch(IllegalArgumentException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-		}
-	}
-	 
-	@PostMapping("/create")
-	public ResponseEntity<?> createUser(@RequestBody User user){
-		try {
-			User created = userService.createUser(user);
-			return ResponseEntity.status(HttpStatus.CREATED).body(created);
-		}catch(IllegalArgumentException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-		}
-	}
-	
-	@PutMapping("/disable/{id}")
-	public ResponseEntity<?> disableUser(@PathVariable Long id,
-		    @RequestHeader(value = "X-User-Id", required = true) Long userId,
-		    @RequestHeader(value = "X-Email", required = true) String email,
-		    @RequestHeader(value = "X-Has-Paid", required = true) boolean hasPaid,
-		    @RequestHeader("X-Signature") String signature){
-		
-		if(!hmacVerifier.verify(userId, email, hasPaid, signature) || userId != id) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
-		}
-		
-		try {
-			userService.disableUser(id);
-			return ResponseEntity.status(HttpStatus.OK).build();
-		}catch(IllegalArgumentException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-		}
-	}
-	
-	@PutMapping("/update")
-	public ResponseEntity<?> updateUser(@RequestBody User user,
-		    @RequestHeader(value = "X-User-Id", required = true) Long userId,
-		    @RequestHeader(value = "X-Email", required = true) String email,
-		    @RequestHeader(value = "X-Has-Paid", required = true) boolean hasPaid,
-		    @RequestHeader("X-Signature") String signature){
-		
-		if(!hmacVerifier.verify(userId, email, hasPaid, signature) ||
-				userId != user.getId()) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
-		}
-		
-		try {
-			User updated = userService.updateUser(user);
-			return ResponseEntity.status(HttpStatus.CREATED).body(updated);
-		}catch(IllegalArgumentException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-		}
-	}
-	
+    public UserController(IUserService userService, HmacVerifier hmacVerifier) {
+        this.userService = userService;
+        this.hmacVerifier = hmacVerifier;
+    }
+
+    @Operation(
+        summary = "HMAC verification test",
+        description = "Returns access status based on HMAC signature verification"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Access granted"),
+        @ApiResponse(responseCode = "401", description = "Invalid signature")
+    })
+    @GetMapping("/prueba")
+    public String prueba(
+        @Parameter(description = "User ID", required = true) @RequestHeader("X-User-Id") Long userId,
+        @Parameter(description = "User email", required = true) @RequestHeader("X-Email") String email,
+        @Parameter(description = "Has paid flag", required = true) @RequestHeader("X-Has-Paid") boolean hasPaid,
+        @Parameter(description = "HMAC signature", required = true) @RequestHeader("X-Signature") String signature
+    ) {
+        boolean valid = hmacVerifier.verify(userId, email, hasPaid, signature);
+        if (!valid) {
+            return "firma inválida - acceso denegado";
+        }
+
+        return "acceso válido" + email + userId + hasPaid;
+    }
+
+    @Operation(
+        summary = "Find user by email",
+        description = "Returns the user associated with the given email"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "User found"),
+        @ApiResponse(responseCode = "400", description = "Invalid or non-existing email")
+    })
+    @GetMapping("/email/{email}")
+    public ResponseEntity<?> findByEmail(
+        @Parameter(description = "Email to search") @PathVariable String email
+    ) {
+        try {
+            User user = userService.findByEmail(email);
+            return ResponseEntity.status(HttpStatus.OK).body(user);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @Operation(
+        summary = "Create a new user",
+        description = "Registers a new user with the provided data"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "User created"),
+        @ApiResponse(responseCode = "400", description = "Invalid input")
+    })
+    @PostMapping("/create")
+    public ResponseEntity<?> createUser(
+        @Parameter(description = "User to create", required = true) @RequestBody User user
+    ) {
+        try {
+            User created = userService.createUser(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @Operation(
+        summary = "Disable a user",
+        description = "Disables a user if the signature is valid and the ID matches"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "User disabled successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - invalid signature or mismatched user ID"),
+        @ApiResponse(responseCode = "400", description = "Invalid user ID")
+    })
+    @PutMapping("/disable/{id}")
+    public ResponseEntity<?> disableUser(
+        @Parameter(description = "User ID to disable") @PathVariable Long id,
+        @Parameter(description = "Authenticated user ID", required = true) @RequestHeader("X-User-Id") Long userId,
+        @Parameter(description = "User email", required = true) @RequestHeader("X-Email") String email,
+        @Parameter(description = "Has paid flag", required = true) @RequestHeader("X-Has-Paid") boolean hasPaid,
+        @Parameter(description = "HMAC signature", required = true) @RequestHeader("X-Signature") String signature
+    ) {
+        if (!hmacVerifier.verify(userId, email, hasPaid, signature) || userId != id) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
+        try {
+            userService.disableUser(id);
+            return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @Operation(
+        summary = "Update a user",
+        description = "Updates the information of an existing user if signature is valid and user ID matches"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "User updated"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized - invalid signature or mismatched user ID"),
+        @ApiResponse(responseCode = "400", description = "Invalid input")
+    })
+    @PutMapping("/update")
+    public ResponseEntity<?> updateUser(
+        @Parameter(description = "User to update", required = true) @RequestBody User user,
+        @Parameter(description = "Authenticated user ID", required = true) @RequestHeader("X-User-Id") Long userId,
+        @Parameter(description = "User email", required = true) @RequestHeader("X-Email") String email,
+        @Parameter(description = "Has paid flag", required = true) @RequestHeader("X-Has-Paid") boolean hasPaid,
+        @Parameter(description = "HMAC signature", required = true) @RequestHeader("X-Signature") String signature
+    ) {
+        if (!hmacVerifier.verify(userId, email, hasPaid, signature) || userId != user.getId()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
+        try {
+            User updated = userService.updateUser(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
 }
+
