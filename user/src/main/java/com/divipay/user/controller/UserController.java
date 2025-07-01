@@ -33,29 +33,6 @@ public class UserController {
     }
 
     @Operation(
-        summary = "HMAC verification test",
-        description = "Returns access status based on HMAC signature verification"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Access granted"),
-        @ApiResponse(responseCode = "401", description = "Invalid signature")
-    })
-    @GetMapping("/prueba")
-    public String prueba(
-        @Parameter(description = "User ID", required = true) @RequestHeader("X-User-Id") Long userId,
-        @Parameter(description = "User email", required = true) @RequestHeader("X-Email") String email,
-        @Parameter(description = "Has paid flag", required = true) @RequestHeader("X-Has-Paid") boolean hasPaid,
-        @Parameter(description = "HMAC signature", required = true) @RequestHeader("X-Signature") String signature
-    ) {
-        boolean valid = hmacVerifier.verify(userId, email, hasPaid, signature);
-        if (!valid) {
-            return "firma inválida - acceso denegado";
-        }
-
-        return "acceso válido" + email + userId + hasPaid;
-    }
-
-    @Operation(
         summary = "Find user by email",
         description = "Returns the user associated with the given email"
     )
