@@ -103,20 +103,19 @@ public class GroupController {
         @ApiResponse(responseCode = "400", description = "Invalid owner ID"),
         @ApiResponse(responseCode = "401", description = "Unauthorized - invalid signature or mismatched ID")
     })
-    @GetMapping("/owner/{ownerId}")
+    @GetMapping("/owner")
     public ResponseEntity<?> findByOwnerId(
-        @Parameter(description = "Owner ID") @PathVariable Long ownerId,
         @Parameter(description = "User ID") @RequestHeader("X-User-Id") Long userId,
         @Parameter(description = "User email") @RequestHeader("X-Email") String email,
         @Parameter(description = "Has paid flag") @RequestHeader("X-Has-Paid") boolean hasPaid,
         @Parameter(description = "HMAC signature") @RequestHeader("X-Signature") String signature
     ) {
-        if (!this.hmacVerifier.verify(userId, email, hasPaid, signature) || !ownerId.equals(userId)) {
+        if (!this.hmacVerifier.verify(userId, email, hasPaid, signature)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
 
         try {
-            List<Group> groups = groupService.findByOwnerId(ownerId);
+            List<Group> groups = groupService.findByOwnerId(userId);
             return ResponseEntity.status(HttpStatus.OK).body(groups);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());

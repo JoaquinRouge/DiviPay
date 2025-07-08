@@ -39,11 +39,24 @@ public class SpentService implements ISpentService {
 	}
 
 	@Override
+	public double findTotal(Long groupId) {
+		List<Spent> list = findByGroupId(groupId);
+		
+		double total = 0;
+		
+		for(Spent s : list) {
+			total += s.getAmount();
+		}
+		
+		return total;
+	}
+	
+	@Override
 	public Spent createSpent(Spent spent) {
 		// Debo verificar que el usuario asignado al gasto entrante este en el grupo asignado al
 		//gasto y que la lista de usuarios que comparten el gasto estan en el grupo asignado al gasto
 		
-		List<Long> members = groupClient.getMembersList(spent.getGroupId()).members();
+		List<Long> members = groupClient.getMembersList(spent.getGroupId());
 		
 		if(!members.contains(spent.getUserId())) {
 			throw new IllegalArgumentException("Unauthorized");
@@ -51,6 +64,10 @@ public class SpentService implements ISpentService {
 		
 		if(!members.containsAll(spent.getMembers())) {
 			throw new IllegalArgumentException("Unauthorized");
+		}
+		
+		if(spent.getMembers().isEmpty()) {
+			spent.setMembers(members);
 		}
 		
 		return spentRepo.save(spent);

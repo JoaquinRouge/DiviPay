@@ -12,6 +12,7 @@ public class SecurityConfig {
     SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
                 .csrf(csrf -> csrf.disable())
+                .cors(cors -> {})
                 .authorizeExchange(auth -> auth.anyExchange().permitAll())
                 .build();
     }

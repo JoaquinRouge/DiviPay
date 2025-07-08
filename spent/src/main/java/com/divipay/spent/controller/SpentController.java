@@ -120,6 +120,33 @@ public class SpentController {
     }
 
     @Operation(
+            summary = "Gets the total amount of a group"
+        )
+        @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Ok"),
+            @ApiResponse(responseCode = "401", description = "Invalid headers"),
+            @ApiResponse(responseCode = "400", description = "Invalid group id")
+        })
+    @GetMapping("/total/{groupId}")
+    public ResponseEntity<?> getTotalFromGroupId(@PathVariable Long groupId,
+    	        @Parameter(description = "Request user id", required = true) @RequestHeader("X-User-Id") Long userId,
+    	        @Parameter(description = "User email", required = true) @RequestHeader("X-Email") String email,
+    	        @Parameter(description = "Indicates if the user has paid or not", required = true) @RequestHeader("X-Has-Paid") boolean hasPaid,
+    	        @Parameter(description = "HMAC sign given by the api-gateway", required = true) @RequestHeader("X-Signature") String signature){
+    	
+        if (!hmacVerifier.verify(userId, email, hasPaid, signature)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(spentService.findTotal(groupId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    	
+    }
+    
+    @Operation(
         summary = "Updates an existing Spent",
         description = "Updates the spent data using the provided DTO"
     )

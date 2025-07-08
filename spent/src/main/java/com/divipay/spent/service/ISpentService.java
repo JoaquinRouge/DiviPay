@@ -13,5 +13,5 @@ public interface ISpentService {
 	Spent createSpent(Spent spent);
 	void deleteSpent(Long id,Long requestUserId);
 	Spent updateSpent(UpdateSpentDto spent,Long requestUserId);
-	
+	double findTotal(Long groupId);
 }
