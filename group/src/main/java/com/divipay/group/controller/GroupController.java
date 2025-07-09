@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.divipay.group.dto.CreateGroupDto;
 import com.divipay.group.dto.UpdateGroupDto;
 import com.divipay.group.model.Group;
 import com.divipay.group.service.IGroupService;
@@ -38,6 +39,34 @@ public class GroupController {
         this.hmacVerifier = hmacVerifier;
     }
 
+    @Operation(
+            summary = "Gets a group by id",
+            description = "Returns the group for the given id"
+        )
+        @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Group found"),
+            @ApiResponse(responseCode = "400", description = "Invalid group id"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - invalid signature")
+        })
+    @GetMapping("/{id}")
+    public ResponseEntity<?> findById(
+            @Parameter(description = "Group ID") @PathVariable Long id,
+            @Parameter(description = "User ID") @RequestHeader("X-User-Id") Long userId,
+            @Parameter(description = "User email") @RequestHeader("X-Email") String email,
+            @Parameter(description = "Has paid flag") @RequestHeader("X-Has-Paid") boolean hasPaid,
+            @Parameter(description = "HMAC signature") @RequestHeader("X-Signature") String signature){
+    	
+        if (!this.hmacVerifier.verify(userId, email, hasPaid, signature)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+    	
+    	try {
+    		return ResponseEntity.status(HttpStatus.OK).body(groupService.getById(id,userId));
+    	}catch(IllegalArgumentException e) {
+    		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    	}
+    }
+    
     @Operation(
         summary = "Get group owner",
         description = "Returns the email of the user who owns the specified group"
@@ -133,7 +162,7 @@ public class GroupController {
     })
     @PostMapping("/create")
     public ResponseEntity<?> createGroup(
-        @Parameter(description = "Group to create") @RequestBody Group group,
+    	@Parameter(description = "Group") @RequestBody CreateGroupDto group,
         @Parameter(description = "User ID") @RequestHeader("X-User-Id") Long userId,
         @Parameter(description = "User email") @RequestHeader("X-Email") String email,
         @Parameter(description = "Has paid flag") @RequestHeader("X-Has-Paid") boolean hasPaid,
@@ -144,8 +173,11 @@ public class GroupController {
         }
 
         try {
+        	
+        	Group newGroup = new Group(userId,group.name(),group.description());
+        	
             return ResponseEntity.status(HttpStatus.CREATED).body(
-                groupService.createGroup(group, hasPaid, userId));
+                groupService.createGroup(newGroup, hasPaid));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }

@@ -20,7 +20,18 @@ public class GroupService implements IGroupService {
 	}
 	
 	@Override
-	public Group findById(Long id) {
+	public Group getById(Long id,Long userId) {
+		List<Long> members = getMembersList(id);
+		
+		if(!members.contains(userId)) {
+			 throw new IllegalArgumentException("Unauthorized");
+		}
+		
+		return findById(id);
+		
+	}
+	
+	private Group findById(Long id) {
 		return groupRepo.findById(id).orElseThrow(()-> new
 				IllegalArgumentException("Group not found"));
 	}
@@ -48,11 +59,7 @@ public class GroupService implements IGroupService {
 	}
 	
 	@Override
-	public Group createGroup(Group group, boolean hasPaid,Long requestUserId) {
-		
-		if(group.getOwnerId() != requestUserId) {
-			throw new IllegalArgumentException("Unauthorized");
-		}
+	public Group createGroup(Group group, boolean hasPaid) {
 		
 		if(!hasPaid && findByOwnerId(group.getOwnerId()).size() == 2) {
 			throw new IllegalArgumentException("Only 2 groups per member allowed."
