@@ -18,5 +18,5 @@ import com.divipay.spent.dto.GroupOwnerDto;
 		
 		// Returns the owner id for the group with the given id
 		@GetMapping("/api/group/{id}/owner")
-		public GroupOwnerDto getOwner(@PathVariable Long id);
+		public Long getOwner(@PathVariable Long id);
 	}

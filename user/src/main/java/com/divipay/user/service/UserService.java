@@ -1,10 +1,13 @@
 package com.divipay.user.service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.divipay.user.dto.UserDto;
 import com.divipay.user.model.User;
 import com.divipay.user.repository.IUserRepository;
 
@@ -24,7 +27,24 @@ public class UserService implements IUserService {
 		return this.userRepo.findById(id).orElseThrow(()->
 			new IllegalArgumentException("User not found for id " + id));
 	}
-
+	
+	@Override 
+	public List<UserDto> findListById(List<Long> list){
+		
+		List<UserDto> userList = new ArrayList<>();
+		
+		for(Long l : list) {
+			
+			User userFromDb = findById(l);
+			
+			
+			userList.add(new UserDto(userFromDb.getId(),userFromDb.getEmail(),
+					userFromDb.getFullName()));
+		}
+		
+		return userList;
+	}
+	
 	@Override
 	public User findByEmail(String email) {
 		return this.userRepo.findByEmail(email).orElseThrow(()->

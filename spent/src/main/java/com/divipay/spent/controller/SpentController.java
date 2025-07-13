@@ -17,6 +17,7 @@ import com.divipay.spent.model.Spent;
 import com.divipay.spent.service.ISpentService;
 import com.divipay.spent.utils.HmacVerifier;
 
+import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -84,6 +85,9 @@ public class SpentController {
         }
 
         try {
+        	
+        	spent.setUserId(userId);
+        	
             return ResponseEntity.status(HttpStatus.CREATED).body(spentService.createSpent(spent));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -115,6 +119,8 @@ public class SpentController {
             spentService.deleteSpent(id, userId);
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }catch (FeignException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }

@@ -85,7 +85,7 @@ public class SpentService implements ISpentService {
 		
 		Spent spent = findById(id);
 		
-		Long owner = groupClient.getOwner(spent.getGroupId()).id();
+		Long owner = groupClient.getOwner(spent.getGroupId());
 		
 		if(requestUserId != owner) {
 			throw new IllegalArgumentException("Unauthorized");

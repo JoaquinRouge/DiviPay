@@ -1,5 +1,7 @@
 package com.divipay.user.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +34,34 @@ public class UserController {
         this.hmacVerifier = hmacVerifier;
     }
 
+    @Operation(
+            summary = "Find users by provided id list",
+            description = "Returns the users associated with the given ids"
+        )
+        @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Users found"),
+            @ApiResponse(responseCode = "400", description = "Invalid or non-existing id")
+        })
+    @PostMapping("/list")
+    public ResponseEntity<?> findByIdList(
+    		@Parameter(description = "List of ids", required = true)@RequestBody List<Long> list,
+    		@Parameter(description = "Authenticated user ID", required = true) @RequestHeader("X-User-Id") Long userId,
+            @Parameter(description = "User email", required = true) @RequestHeader("X-Email") String email,
+            @Parameter(description = "Has paid flag", required = true) @RequestHeader("X-Has-Paid") boolean hasPaid,
+            @Parameter(description = "HMAC signature", required = true) @RequestHeader("X-Signature") String signature){
+    	
+        if (!hmacVerifier.verify(userId, email, hasPaid, signature)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+    	
+        try {
+        	return ResponseEntity.status(HttpStatus.OK).body(userService.findListById(list));
+        }catch(IllegalArgumentException e) {
+        	return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+        
+    }
+    
     @Operation(
         summary = "Find user by email",
         description = "Returns the user associated with the given email"

@@ -75,7 +75,9 @@ public class GroupService implements IGroupService {
 	@Override
 	public void deleteGroup(Long id,Long requestUserId) {
 
-		if(id != requestUserId) {
+		Group group = findById(id);
+		
+		if(group.getOwnerId() != requestUserId) {
 			throw new IllegalArgumentException("Unauthorized");
 		}
 		
