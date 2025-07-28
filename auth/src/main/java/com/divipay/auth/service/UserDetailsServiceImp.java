@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.divipay.auth.client.UserClient;
 import com.divipay.auth.dto.AuthLoginDto;
 import com.divipay.auth.dto.AuthResponseDto;
@@ -60,7 +61,11 @@ public class UserDetailsServiceImp implements UserDetailsService{
 		
 		String jwt = jwtUtils.generateToken(auth);
 		
-		return new AuthResponseDto(username,"login successful",jwt,true);
+		DecodedJWT decodedToken = jwtUtils.validateToken(jwt);
+		
+		String userId = jwtUtils.getSpecificClaim(decodedToken, "id").toString();
+		
+		return new AuthResponseDto(username,"login successful",jwt,userId);
 		
 	}
 	
