@@ -1,11 +1,15 @@
 package com.divipay.group.service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
+import com.divipay.group.client.FriendsClient;
 import com.divipay.group.dto.UpdateGroupDto;
 import com.divipay.group.model.Group;
 import com.divipay.group.repository.IGroupRepository;
@@ -14,9 +18,11 @@ import com.divipay.group.repository.IGroupRepository;
 public class GroupService implements IGroupService {
 
 	private IGroupRepository groupRepo;
+	private FriendsClient friendsClient;
 	
-	public GroupService(IGroupRepository groupRepo) {
+	public GroupService(IGroupRepository groupRepo, FriendsClient friendsClient) {
 		this.groupRepo = groupRepo;
+		this.friendsClient = friendsClient;
 	}
 	
 	@Override
@@ -105,4 +111,28 @@ public class GroupService implements IGroupService {
 		return groupRepo.save(groupFromDb);
 	}
 
-}
+		@Override
+		public void addMembers(Long userId, List<Long> users, Long groupId) {
+			
+			for(Long user : users) {
+				if(!friendsClient.areFriends(userId, user)) {
+					throw new IllegalArgumentException("Not allowed");
+				}
+			}
+			
+			Group group = findById(groupId);
+			
+			List<Long> members = group.getMembers();
+			
+			Set<Long> existingMembers = new HashSet<>(members);
+			
+			for(Long user : users) {
+				existingMembers.add(user);
+			}
+			
+			group.setMembers(new ArrayList<>(existingMembers));
+			
+			groupRepo.save(group);
+		}
+	
+	}

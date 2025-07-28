@@ -20,6 +20,7 @@ import com.divipay.group.model.Group;
 import com.divipay.group.service.IGroupService;
 import com.divipay.group.utils.HmacVerifier;
 
+import feign.FeignException.FeignClientException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -240,5 +241,38 @@ public class GroupController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+    
+    @Operation(
+    	    summary = "Add members to a group",
+    	    description = "Adds a list of user IDs to a group, only if they are friends of the requester"
+    	)
+    	@ApiResponses(value = {
+    	    @ApiResponse(responseCode = "200", description = "Members added successfully"),
+    	    @ApiResponse(responseCode = "400", description = "Invalid group ID or non-friends in list"),
+    	    @ApiResponse(responseCode = "401", description = "Unauthorized - invalid signature")
+    	})
+    	@PostMapping("/{groupId}/add-members")
+    	public ResponseEntity<?> addMembers(
+    	    @Parameter(description = "Group ID") @PathVariable Long groupId,
+    	    @Parameter(description = "List of user IDs to add") @RequestBody List<Long> users,
+    	    @Parameter(description = "User ID") @RequestHeader("X-User-Id") Long userId,
+    	    @Parameter(description = "User email") @RequestHeader("X-Email") String email,
+    	    @Parameter(description = "Has paid flag") @RequestHeader("X-Has-Paid") boolean hasPaid,
+    	    @Parameter(description = "HMAC signature") @RequestHeader("X-Signature") String signature
+    	) {
+    	    if (!this.hmacVerifier.verify(userId, email, hasPaid, signature)) {
+    	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+    	    }
+
+    	    try {
+    	        groupService.addMembers(userId, users, groupId);
+    	        return ResponseEntity.status(HttpStatus.OK).body("Members added successfully");
+    	    } catch (IllegalArgumentException e) {
+    	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    	    }catch(FeignClientException e) {
+    	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    	    }
+    	}
+
 }
 
