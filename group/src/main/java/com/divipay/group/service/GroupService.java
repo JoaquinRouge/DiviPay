@@ -98,12 +98,11 @@ public class GroupService implements IGroupService {
 	@Override
 	public Group updateGroup(UpdateGroupDto group,Long requestUserId) {
 		
-		if(group.id() != requestUserId) {
-			throw new IllegalArgumentException("Unauthorized");
-		}
-		
 		Group groupFromDb = findById(group.id());
 		
+		if(groupFromDb.getOwnerId()!= requestUserId) {
+			throw new IllegalArgumentException("Unauthorized");
+		}
 		
 		groupFromDb.setName(group.name());
 		groupFromDb.setDescription(group.description());
@@ -120,7 +119,7 @@ public class GroupService implements IGroupService {
 				}
 				
 				if(findByUserId(user).size() == 2) {
-					throw new IllegalArgumentException("Someone has reached the limits of groups");
+					throw new IllegalArgumentException("Someone has reached the limit of groups");
 				}
 			}
 			
