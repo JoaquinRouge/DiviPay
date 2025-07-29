@@ -8,7 +8,7 @@ import com.divipay.group.model.Group;
 public interface IGroupService {
 
 	Group getById(Long id,Long userId);
-	List<Group> findByOwnerId(Long id);
+	List<Group> findByUserId(Long id);
 	List<Long> getMembersList(Long id);
 	Long getOwner(Long id);
 	Group createGroup(Group group,boolean hasPaid);

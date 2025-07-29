@@ -43,8 +43,8 @@ public class GroupService implements IGroupService {
 	}
 
 	@Override
-	public List<Group> findByOwnerId(Long id) {
-		return groupRepo.findByOwnerId(id).orElse(Collections.emptyList());
+	public List<Group> findByUserId(Long id) {
+		return groupRepo.findByOwnerIdOrMembersContains(id,id).orElse(Collections.emptyList());
 	}
 	
 	@Override
@@ -67,7 +67,7 @@ public class GroupService implements IGroupService {
 	@Override
 	public Group createGroup(Group group, boolean hasPaid) {
 		
-		if(!hasPaid && findByOwnerId(group.getOwnerId()).size() == 2) {
+		if(!hasPaid && findByUserId(group.getOwnerId()).size() == 2) {
 			throw new IllegalArgumentException("Only 2 groups per member allowed."
 					+ " Upgrade to premium to create more.");
 		}
@@ -117,6 +117,10 @@ public class GroupService implements IGroupService {
 			for(Long user : users) {
 				if(!friendsClient.areFriends(userId, user)) {
 					throw new IllegalArgumentException("Not allowed");
+				}
+				
+				if(findByUserId(user).size() == 2) {
+					throw new IllegalArgumentException("Someone has reached the limits of groups");
 				}
 			}
 			

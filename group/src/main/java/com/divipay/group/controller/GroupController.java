@@ -125,16 +125,16 @@ public class GroupController {
     }
 
     @Operation(
-        summary = "Get groups by owner",
-        description = "Returns all groups created by the specified owner"
+        summary = "Get groups for user",
+        description = "Returns all groups user has"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Groups retrieved"),
         @ApiResponse(responseCode = "400", description = "Invalid owner ID"),
         @ApiResponse(responseCode = "401", description = "Unauthorized - invalid signature or mismatched ID")
     })
-    @GetMapping("/owner")
-    public ResponseEntity<?> findByOwnerId(
+    @GetMapping
+    public ResponseEntity<?> findByUserId(
         @Parameter(description = "User ID") @RequestHeader("X-User-Id") Long userId,
         @Parameter(description = "User email") @RequestHeader("X-Email") String email,
         @Parameter(description = "Has paid flag") @RequestHeader("X-Has-Paid") boolean hasPaid,
@@ -145,7 +145,7 @@ public class GroupController {
         }
 
         try {
-            List<Group> groups = groupService.findByOwnerId(userId);
+            List<Group> groups = groupService.findByUserId(userId);
             return ResponseEntity.status(HttpStatus.OK).body(groups);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());

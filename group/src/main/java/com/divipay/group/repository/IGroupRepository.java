@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import com.divipay.group.model.Group;
 
-@Repository
-public interface IGroupRepository extends JpaRepository<Group, Long>{
-	Optional<List<Group>> findByOwnerId(Long id);
-}
+	@Repository
+	public interface IGroupRepository extends JpaRepository<Group, Long>{
+		Optional<List<Group>> findByOwnerIdOrMembersContains(Long id,Long memberId);
+	}
