@@ -120,17 +120,19 @@ public class FriendController {
     })
     @GetMapping("/{userId}/is-friend-with/{otherUserId}")
     public ResponseEntity<?> areFriends(
+            @Parameter(description = "First user ID", required = true) @PathVariable Long userId,
             @Parameter(description = "Second user ID", required = true) @PathVariable Long otherUserId,
             @Parameter(description = "Authenticated user ID", required = true) @RequestHeader("X-User-Id") Long authUserId,
             @Parameter(description = "User email", required = true) @RequestHeader("X-Email") String email,
             @Parameter(description = "Has paid flag", required = true) @RequestHeader("X-Has-Paid") boolean hasPaid,
             @Parameter(description = "HMAC signature", required = true) @RequestHeader("X-Signature") String signature
     ) {
-        if (!hmacVerifier.verify(authUserId, email, hasPaid, signature)) {
+        if (!hmacVerifier.verify(authUserId, email, hasPaid, signature) ||
+            !(authUserId.equals(userId) || authUserId.equals(otherUserId))) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
 
-        boolean friends = friendService.areFriends(authUserId, otherUserId);
+        boolean friends = friendService.areFriends(userId, otherUserId);
         return ResponseEntity.ok(friends);
     }
 }
