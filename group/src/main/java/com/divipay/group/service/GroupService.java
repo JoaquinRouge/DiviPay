@@ -130,12 +130,45 @@ public class GroupService implements IGroupService {
 			Set<Long> existingMembers = new HashSet<>(members);
 			
 			for(Long user : users) {
-				existingMembers.add(user);
+				
+				if(!existingMembers.contains(user)) {
+					existingMembers.add(user);
+				}
+
 			}
 			
 			group.setMembers(new ArrayList<>(existingMembers));
 			
 			groupRepo.save(group);
 		}
+
+		@Override
+		public void leaveGroup(Long groupId, Long userId) {
+		    Group group = findById(groupId);
+		    List<Long> members = new ArrayList<>(group.getMembers());
+
+		    boolean isMember = members.contains(userId) || userId.equals(group.getOwnerId());
+		    if (!isMember) {
+		        throw new IllegalArgumentException("The user does not belong to this group");
+		    }
+
+		    if (userId.equals(group.getOwnerId())) {
+		        if (members.isEmpty()) {
+		            groupRepo.delete(group);
+		            return;
+		        }
+
+		        Long newOwnerId = members.get(0);
+		        group.setOwnerId(newOwnerId);
+		        members.remove(newOwnerId);
+		    } else {
+		        members.remove(userId);
+		    }
+
+		    group.setMembers(members);
+		    groupRepo.save(group);
+		}
+
+
 	
 	}

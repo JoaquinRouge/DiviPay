@@ -15,4 +15,5 @@ public interface IGroupService {
 	void deleteGroup(Long id,Long requestUserId);
 	Group updateGroup(UpdateGroupDto group,Long requestUserId);
 	void addMembers(Long userId,List<Long> users,Long groupId);
+	void leaveGroup(Long groupId,Long userId);
 }

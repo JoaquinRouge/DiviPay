@@ -273,6 +273,46 @@ public class GroupController {
     	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     	    }
     	}
+    
+    @PutMapping("/leave/{groupId}")
+    @Operation(
+        summary = "Leave a group",
+        description = "Allows a user to leave a group. If the user is the group owner, ownership will be transferred to another member or the group will be deleted if no members remain."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "User successfully left the group"),
+        @ApiResponse(responseCode = "400", description = "User is not a member of the group"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized (invalid HMAC signature)")
+    })
+    public ResponseEntity<?> leaveGroup(
+        @Parameter(description = "ID of the group to leave", required = true)
+        @PathVariable Long groupId,
 
+        @RequestBody(required = false) List<Long> users,
+
+        @Parameter(description = "ID of the user leaving the group", required = true)
+        @RequestHeader("X-User-Id") Long userId,
+
+        @Parameter(description = "Email of the user", required = true)
+        @RequestHeader("X-Email") String email,
+
+        @Parameter(description = "Flag indicating if the user has paid", required = true)
+        @RequestHeader("X-Has-Paid") boolean hasPaid,
+
+        @Parameter(description = "HMAC signature for request validation", required = true)
+        @RequestHeader("X-Signature") String signature
+    ) {
+        if (!this.hmacVerifier.verify(userId, email, hasPaid, signature)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
+        try {
+            groupService.leaveGroup(groupId, userId);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+    
 }
 
