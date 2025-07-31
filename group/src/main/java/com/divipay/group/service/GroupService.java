@@ -10,6 +10,7 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 
 import com.divipay.group.client.FriendsClient;
+import com.divipay.group.client.SpentClient;
 import com.divipay.group.dto.UpdateGroupDto;
 import com.divipay.group.model.Group;
 import com.divipay.group.repository.IGroupRepository;
@@ -19,10 +20,13 @@ public class GroupService implements IGroupService {
 
 	private IGroupRepository groupRepo;
 	private FriendsClient friendsClient;
+	private SpentClient	spentClient;
 	
-	public GroupService(IGroupRepository groupRepo, FriendsClient friendsClient) {
+	public GroupService(IGroupRepository groupRepo, FriendsClient friendsClient,
+			SpentClient spentClient) {
 		this.groupRepo = groupRepo;
 		this.friendsClient = friendsClient;
+		this.spentClient = spentClient;
 	}
 	
 	@Override
@@ -91,6 +95,7 @@ public class GroupService implements IGroupService {
 			throw new IllegalArgumentException("Group not found");
 		}
 		
+		spentClient.deleteSpents(id);
 		groupRepo.deleteById(id);
 		
 	}
@@ -154,6 +159,7 @@ public class GroupService implements IGroupService {
 
 		    if (userId.equals(group.getOwnerId())) {
 		        if (members.isEmpty()) {
+		        	spentClient.deleteSpents(groupId);
 		            groupRepo.delete(group);
 		            return;
 		        }

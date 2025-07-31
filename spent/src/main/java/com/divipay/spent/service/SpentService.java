@@ -110,4 +110,25 @@ public class SpentService implements ISpentService {
 		return spentRepo.save(spentFromDb);
 	}
 
+	@Override
+	public void deleteAllSpents(Long groupId,Long requestUserId) {
+		
+		Long ownerId = groupClient.getOwner(groupId);
+		
+		if(!requestUserId.equals(ownerId)) {
+			throw new IllegalArgumentException("Unauthorized");
+		}
+		
+		List<Spent> spents = findByGroupId(groupId);
+		
+		if(spents.isEmpty()) {
+			return;	
+		}
+		
+		for(Spent spent : spents) {
+			spentRepo.deleteById(spent.getId());
+		}
+		
+	}
+
 }
