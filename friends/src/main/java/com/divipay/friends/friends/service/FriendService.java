@@ -1,5 +1,6 @@
 package com.divipay.friends.friends.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -11,7 +12,7 @@ import com.divipay.friends.friends.repository.FriendRequestRepository;
 import com.divipay.friends.friends.repository.FriendshipRepository;
 
 @Service
-public class FriendService {
+public class FriendService implements IFriendsService{
 
     private final FriendRequestRepository friendRequestRepository;
     private final FriendshipRepository friendshipRepository;
@@ -21,7 +22,8 @@ public class FriendService {
         this.friendRequestRepository = friendRequestRepository;
         this.friendshipRepository = friendshipRepository;
     }
-
+    
+    @Override
     public void sendFriendRequest(Long requesterId, Long targetId) {
         if (requesterId.equals(targetId)) {
             throw new IllegalArgumentException("You cant sent a friendship request to yourself.");
@@ -38,12 +40,14 @@ public class FriendService {
 
         // Create request
         FriendRequest request = new FriendRequest();
+        request.setCreatedAt(LocalDateTime.now());
         request.setRequesterId(requesterId);
         request.setTargetId(targetId);
         friendRequestRepository.save(request);
     }
 
     // Accept friendship request
+    @Override
     public void acceptFriendRequest(Long requesterId, Long targetId) {
         // Check if request exists
         FriendRequest request = friendRequestRepository
@@ -61,6 +65,7 @@ public class FriendService {
 
         if (!friendshipRepository.existsByUserIdAndFriendId(userA, userB)) {
             Friendship friendship = new Friendship();
+            friendship.setCreatedAt(LocalDateTime.now());
             friendship.setUserId(userA);
             friendship.setFriendId(userB);
             friendshipRepository.save(friendship);
@@ -68,6 +73,7 @@ public class FriendService {
     }
 
     // Obtain user friends list
+    @Override
     public List<Long> getFriendIds(Long userId) {
         return friendshipRepository.findAll().stream()
                 .filter(f -> f.getUserId().equals(userId) || f.getFriendId().equals(userId))
@@ -76,10 +82,27 @@ public class FriendService {
     }
 
     // Check if given users are friends
+    @Override
     public boolean areFriends(Long userId1, Long userId2) {
         Long a = Math.min(userId1, userId2);
         Long b = Math.max(userId1, userId2);
         return friendshipRepository.existsByUserIdAndFriendId(a, b);
     }
+    
+    @Override
+    public List<FriendRequest> getReceivedRequests(Long userId) {
+        return friendRequestRepository.findByTargetId(userId);
+    }
+
+	@Override
+	public void deleteFriendRequest(Long id) {
+		
+		if(!friendRequestRepository.existsById(id)) {
+			throw new IllegalArgumentException("Friend request not found");
+		}
+		
+		friendRequestRepository.deleteById(id);
+		
+	}
 }
 

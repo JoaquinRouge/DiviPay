@@ -1,5 +1,6 @@
 package com.divipay.friends.friends.controller;
 
+import com.divipay.friends.friends.model.FriendRequest;
 import com.divipay.friends.friends.service.FriendService;
 import com.divipay.friends.friends.utils.HmacVerifier;
 
@@ -106,8 +107,13 @@ public class FriendController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
 
-        List<Long> friends = friendService.getFriendIds(userId);
-        return ResponseEntity.ok(friends);
+        try {
+            List<Long> friends = friendService.getFriendIds(userId);
+            return ResponseEntity.ok(friends);
+        } catch (Exception e) {
+            // En teoría no debería tirar excepciones, pero por si acaso:
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
+        }
     }
 
     @Operation(
@@ -132,8 +138,86 @@ public class FriendController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
 
-        boolean friends = friendService.areFriends(userId, otherUserId);
-        return ResponseEntity.ok(friends);
+        try {
+            boolean friends = friendService.areFriends(userId, otherUserId);
+            return ResponseEntity.ok(friends);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
+        }
+    }
+    
+    @Operation(
+            summary = "Get received friend requests",
+            description = "Returns the list of friend requests received by the specified user"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Received friend requests retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - invalid signature"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    @GetMapping("/received-requests")
+    public ResponseEntity<?> getReceivedRequests(
+            @Parameter(description = "Authenticated user ID", required = true)
+            @RequestHeader("X-User-Id") Long authUserId,
+
+            @Parameter(description = "User email", required = true)
+            @RequestHeader("X-Email") String email,
+
+            @Parameter(description = "Has paid flag", required = true)
+            @RequestHeader("X-Has-Paid") boolean hasPaid,
+
+            @Parameter(description = "HMAC signature", required = true)
+            @RequestHeader("X-Signature") String signature) {
+
+        if (!hmacVerifier.verify(authUserId, email, hasPaid, signature)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
+        try {
+            List<FriendRequest> received = friendService.getReceivedRequests(authUserId);
+            return ResponseEntity.ok(received);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
+        }
+    }
+
+    @Operation(
+            summary = "Delete a friend request",
+            description = "Deletes a friend request by ID"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Friend request deleted successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - invalid signature")
+    })
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteRequest(
+            @Parameter(description = "Authenticated user ID", required = true)
+            @RequestHeader("X-User-Id") Long authUserId,
+            
+            @Parameter(description = "Request id", required = true)
+            @PathVariable("id") Long id,
+            
+            @Parameter(description = "User email", required = true)
+            @RequestHeader("X-Email") String email,
+
+            @Parameter(description = "Has paid flag", required = true)
+            @RequestHeader("X-Has-Paid") boolean hasPaid,
+
+            @Parameter(description = "HMAC signature", required = true)
+            @RequestHeader("X-Signature") String signature) {
+
+        if (!hmacVerifier.verify(authUserId, email, hasPaid, signature)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        
+        try {
+            friendService.deleteFriendRequest(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 }
+
 
