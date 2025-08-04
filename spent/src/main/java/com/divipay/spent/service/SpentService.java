@@ -33,14 +33,21 @@ public class SpentService implements ISpentService {
 	}
 
 	@Override
-	public List<Spent> findByGroupId(Long id) {
+	public List<Spent> findByGroupId(Long id,Long requestUserId) {
+		
+		List<Long> membersList = groupClient.getMembersList(id);
+		
+		if(!membersList.contains(requestUserId)) {
+			throw new IllegalArgumentException("Unauthorized");
+		}
+		
 		return spentRepo.findByGroupId(id).orElseThrow(()->
 		new IllegalArgumentException("Spent not found"));
 	}
 
 	@Override
-	public double findTotal(Long groupId) {
-		List<Spent> list = findByGroupId(groupId);
+	public double findTotal(Long groupId,Long requestUserId) {
+		List<Spent> list = findByGroupId(groupId,requestUserId);
 		
 		double total = 0;
 		
@@ -119,7 +126,7 @@ public class SpentService implements ISpentService {
 			throw new IllegalArgumentException("Unauthorized");
 		}
 		
-		List<Spent> spents = findByGroupId(groupId);
+		List<Spent> spents = findByGroupId(groupId,requestUserId);
 		
 		if(spents.isEmpty()) {
 			return;	

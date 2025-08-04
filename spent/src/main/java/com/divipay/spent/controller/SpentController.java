@@ -57,7 +57,7 @@ public class SpentController {
         }
 
         try {
-            return ResponseEntity.status(HttpStatus.OK).body(spentService.findByGroupId(id));
+            return ResponseEntity.status(HttpStatus.OK).body(spentService.findByGroupId(id,userId));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
@@ -145,7 +145,7 @@ public class SpentController {
         }
         
         try {
-            return ResponseEntity.status(HttpStatus.OK).body(spentService.findTotal(groupId));
+            return ResponseEntity.status(HttpStatus.OK).body(spentService.findTotal(groupId,userId));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }

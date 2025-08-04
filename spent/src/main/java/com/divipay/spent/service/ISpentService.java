@@ -9,10 +9,10 @@ public interface ISpentService {
 
 	Spent findById(Long id);
 	List<Spent> findByUserId(Long id);
-	List<Spent> findByGroupId(Long id);
+	List<Spent> findByGroupId(Long id,Long requestUserId);
 	Spent createSpent(Spent spent);
 	void deleteSpent(Long id,Long requestUserId);
 	Spent updateSpent(UpdateSpentDto spent,Long requestUserId);
-	double findTotal(Long groupId);
+	double findTotal(Long groupId,Long requestUserId);
 	void deleteAllSpents(Long groupId,Long requestUserId);
 }
