@@ -95,20 +95,19 @@ public class FriendController {
             @ApiResponse(responseCode = "200", description = "Friends retrieved successfully"),
             @ApiResponse(responseCode = "401", description = "Unauthorized - invalid signature")
     })
-    @GetMapping("/{userId}")
+    @GetMapping()
     public ResponseEntity<?> getFriends(
-            @Parameter(description = "User ID to get friends for", required = true) @PathVariable Long userId,
             @Parameter(description = "Authenticated user ID", required = true) @RequestHeader("X-User-Id") Long authUserId,
             @Parameter(description = "User email", required = true) @RequestHeader("X-Email") String email,
             @Parameter(description = "Has paid flag", required = true) @RequestHeader("X-Has-Paid") boolean hasPaid,
             @Parameter(description = "HMAC signature", required = true) @RequestHeader("X-Signature") String signature
     ) {
-        if (!hmacVerifier.verify(authUserId, email, hasPaid, signature) || !authUserId.equals(userId)) {
+        if (!hmacVerifier.verify(authUserId, email, hasPaid, signature)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
 
         try {
-            List<Long> friends = friendService.getFriendIds(userId);
+            List<Long> friends = friendService.getFriendIds(authUserId);
             return ResponseEntity.ok(friends);
         } catch (Exception e) {
             // En teoría no debería tirar excepciones, pero por si acaso:
