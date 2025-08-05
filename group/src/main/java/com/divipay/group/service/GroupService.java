@@ -118,6 +118,12 @@ public class GroupService implements IGroupService {
 		@Override
 		public void addMembers(Long userId, List<Long> users, Long groupId) {
 			
+			Group group = findById(groupId);
+			
+			if(!userId.equals(group.getOwnerId())) {
+				throw new IllegalArgumentException("Not allowed");
+			}
+			
 			for(Long user : users) {
 				if(!friendsClient.areFriends(userId, user)) {
 					throw new IllegalArgumentException("Not allowed");
@@ -128,7 +134,6 @@ public class GroupService implements IGroupService {
 				}
 			}
 			
-			Group group = findById(groupId);
 			
 			List<Long> members = group.getMembers();
 			
