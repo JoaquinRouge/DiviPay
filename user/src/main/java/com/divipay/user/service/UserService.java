@@ -39,7 +39,7 @@ public class UserService implements IUserService {
 			
 			
 			userList.add(new UserDto(userFromDb.getId(),userFromDb.getEmail(),
-					userFromDb.getFullName()));
+					userFromDb.getFullName(),userFromDb.getCreatedAt()));
 		}
 		
 		return userList;

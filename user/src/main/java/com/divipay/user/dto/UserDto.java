@@ -1,5 +1,7 @@
 package com.divipay.user.dto;
 
-public record UserDto(Long id,String email,String fullName) {
+import java.time.LocalDate;
+
+public record UserDto(Long id,String email,String fullName,LocalDate createdAt) {
 
 }
